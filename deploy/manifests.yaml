@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: plugin-operator
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: plugin-operator
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: plugin-operator
+subjects:
+- kind: ServiceAccount
+  name: plugin-operator
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: plugin-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plugin-operator
+  namespace: default
+  annotations:
+    deployment.kubernetes.io/revision: "{{ TIMESTAMP }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plugin-operator
+  template:
+    metadata:
+      labels:
+        app: plugin-operator
+      annotations:
+        timestamp: "{{ TIMESTAMP }}"
+    spec:
+      serviceAccountName: plugin-operator
+      containers:
+      - name: operator
+        image: IMAGE_PLACEHOLDER
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi 
